@@ -1,0 +1,29 @@
+[project]
+name = "jumpstarter-driver-rcars4"
+version = "0.1.0"
+description = "rcars4"
+readme = "README.md"
+requires-python = ">=3.12.3"
+dependencies = [
+    "jumpstarter",
+    "jumpstarter_driver_tftp",
+    "jumpstarter_driver_http",
+    "jumpstarter_driver_raspberrypi",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.3",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+
+[tool.uv.sources]
+jumpstarter_driver_tftp = { git = "https://github.com/jumpstarter-dev/jumpstarter", subdirectory = "contrib/drivers/tftp" }
+jumpstarter_driver_http = { git = "https://github.com/jumpstarter-dev/jumpstarter", subdirectory = "contrib/drivers/http" }
+jumpstarter_driver_raspberrypi = { git = "https://github.com/jumpstarter-dev/jumpstarter", subdirectory = "contrib/drivers/raspberrypi" }
+# jumpstarter_driver_tftp = { workspace = true }
+# jumpstarter_driver_http = { workspace = true }
+# jumpstarter_driver_raspberrypi = { workspace = true }
