@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 import logging
-import click
+import asyncclick as click
 import sys
-import time
 
 from jumpstarter.client import DriverClient
 from jumpstarter.drivers.composite.client import CompositeClient
@@ -36,16 +35,17 @@ class RCarSetupClient(CompositeClient, DriverClient):
             logger.info(f"File {os_image_name} already exists on HTTP server")
 
         try:
-            params = self.call("power_cycle")
-
+            self.call("power_cycle")
             with PexpectAdapter(client=self.children["serial"]) as console:
                 console.logfile = sys.stdout.buffer
 
                 logger.info("Waiting for U-Boot prompt...")
-                console.expect("=>", timeout=60)
+                try:
+                    console.expect("=>", timeout=60)
+                except Exception:
+                    logger.error(f"Timeout waiting for U-Boot prompt. Last output: {console.before.decode('utf-8') if console.before else 'No output'}")
+                    raise
                 logger.info("U-Boot prompt detected")
-
-                time.sleep(10)
 
                 logger.info("Configuring network...")
                 console.sendline("dhcp")
@@ -136,6 +136,10 @@ class RCarSetupClient(CompositeClient, DriverClient):
                     logger.info(f"Setting boot env {key}")
                     console.sendline(f"setenv {key} '{value}'")
                     console.expect("=>")
+
+                # save env
+                console.sendline("saveenv")
+                console.expect("=>", timeout=5)
 
                 logger.info("Performing final boot...")
                 console.sendline("boot")

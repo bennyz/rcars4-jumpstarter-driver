@@ -125,8 +125,12 @@ def setup_environment(client, skip_flash=False):
 
       with PexpectAdapter(client=serial) as console:
           console.logfile = sys.stdout.buffer
+          print("Attempting to interrupt boot sequence...")
+          for _ in range(10):
+              console.send(b'\r')
+              time.sleep(0.1)
+
           console.expect("=>", timeout=60)
-          time.sleep(10)
 
           helper = ConsoleHelper(console)
           dhcp_info = helper.get_dhcp_info()
