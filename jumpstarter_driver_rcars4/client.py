@@ -3,6 +3,7 @@ from pathlib import Path
 import logging
 import asyncclick as click
 import sys
+import time
 
 from jumpstarter.client import DriverClient
 from jumpstarter.drivers.composite.client import CompositeClient
@@ -40,12 +41,12 @@ class RCarSetupClient(CompositeClient, DriverClient):
                 console.logfile = sys.stdout.buffer
 
                 logger.info("Waiting for U-Boot prompt...")
-                try:
-                    console.expect("=>", timeout=60)
-                except Exception:
-                    logger.error(f"Timeout waiting for U-Boot prompt. Last output: {console.before.decode('utf-8') if console.before else 'No output'}")
-                    raise
-                logger.info("U-Boot prompt detected")
+
+                for _ in range(20):
+                    console.sendline("\r\n")
+                    time.sleep(0.1)
+
+                console.expect("=>", timeout=60)
 
                 logger.info("Configuring network...")
                 console.sendline("dhcp")
@@ -137,7 +138,6 @@ class RCarSetupClient(CompositeClient, DriverClient):
                     console.sendline(f"setenv {key} '{value}'")
                     console.expect("=>")
 
-                # save env
                 console.sendline("saveenv")
                 console.expect("=>", timeout=5)
 
