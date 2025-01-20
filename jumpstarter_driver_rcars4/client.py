@@ -47,7 +47,7 @@ class RCarSetupClient(CompositeClient, DriverClient):
                     time.sleep(0.1)
 
                 console.expect("=>", timeout=60)
-
+                time.sleep(5)
                 logger.info("Configuring network...")
                 console.sendline("dhcp")
                 console.expect("DHCP client bound to address ([0-9.]+)")
@@ -102,13 +102,12 @@ class RCarSetupClient(CompositeClient, DriverClient):
                 console.expect(r"\d+ bytes \(.+?\) copied, [0-9.]+ seconds, .+?", timeout=600)
                 console.expect("/ #")
 
-                logger.info("Setting up watchdog for reboot...")
-                console.sendline("modprobe renesas_wdt")
-                console.expect("/ #")
-                console.sendline("watchdog -T 2 -t 120 /dev/watchdog")
-                console.expect("/ #")
+                self.call("power_cycle")
 
                 logger.info("Waiting for reboot...")
+                for _ in range(20):
+                    console.sendline("")
+                    time.sleep(0.1)
                 console.expect("=>", timeout=60)
 
                 boot_env = {
