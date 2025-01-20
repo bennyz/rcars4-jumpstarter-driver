@@ -47,7 +47,7 @@ class RCarSetupClient(CompositeClient, DriverClient):
                     time.sleep(0.1)
 
                 console.expect("=>", timeout=60)
-                time.sleep(5)
+
                 logger.info("Configuring network...")
                 console.sendline("dhcp")
                 console.expect("DHCP client bound to address ([0-9.]+)")
