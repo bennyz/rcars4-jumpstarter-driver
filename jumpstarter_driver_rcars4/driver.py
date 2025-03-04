@@ -1,32 +1,45 @@
 from dataclasses import dataclass
-import logging
-import time
+
+from jumpstarter_driver_composite.driver import CompositeInterface, Proxy
 
 from jumpstarter.driver import Driver, export
-from jumpstarter.drivers.composite.driver import CompositeInterface
-from jumpstarter.drivers.pyserial.driver import PySerial
 
-logger = logging.getLogger(__name__)
 
 @dataclass(kw_only=True)
 class RCarSetup(CompositeInterface, Driver):
+    """RCar Setup Driver"""
+    log_level: str = "INFO"
+
     @classmethod
     def client(cls) -> str:
         return "jumpstarter_driver_rcars4.client.RCarSetupClient"
 
     def __post_init__(self):
-        super().__post_init__()
-        if "serial" not in self.children:
-            self.children["serial"] = PySerial(url="/dev/ttyUSB0", baudrate=1843200)
+        if hasattr(super(), "__post_init__"):
+            super().__post_init__()
+
+        self.children["tftp"] = Proxy(ref="tftp_driver")
+        self.children["http"] = Proxy(ref="http_driver")
+        self.children["serial"] = Proxy(ref="serial_driver")
+        self.children["power"] = Proxy(ref="power_driver")
 
     @export
     def power_cycle(self) -> dict:
-        logger.info("power cycling device...")
-        self.children["gpio"].off()
+        """Power cycle the device"""
+        self.logger.info("Power cycling RCar device...")
+        self.children["power"].off()
+
+        import time
         time.sleep(3)
-        self.children["gpio"].on()
+
+        self.children["power"].on()
 
         return {
             "tftp_host": self.children["tftp"].get_host(),
             "http_url": self.children["http"].get_url()
         }
+
+    def close(self):
+        """Cleanup resources"""
+        if hasattr(super(), "close"):
+            super().close()
